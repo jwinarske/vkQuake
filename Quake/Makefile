@@ -43,8 +43,6 @@ DEBUG   ?= 0
 CC ?= gcc
 LINKER = $(CC)
 
-STRIP ?= strip
-
 CPUFLAGS=
 DFLAGS ?=
 CFLAGS ?= -Wall -Wno-trigraphs -std=gnu99
@@ -52,16 +50,11 @@ CFLAGS += $(CPUFLAGS)
 ifneq ($(DEBUG),0)
 DFLAGS += -D_DEBUG
 CFLAGS += -g
-do_strip=
 else
 DFLAGS += -DNDEBUG
 CFLAGS += -O2
 CFLAGS += $(call check_gcc,-fweb,)
 CFLAGS += $(call check_gcc,-frename-registers,)
-cmd_strip=$(STRIP) $(1)
-define do_strip
-	$(call cmd_strip,$(1));
-endef
 endif
 
 ifneq ($(VULKAN_SDK),)
@@ -73,9 +66,8 @@ ifeq ($(DO_USERDIRS),1)
 CFLAGS += -DDO_USERDIRS=1
 endif
 
-SDL_CONFIG ?= sdl2-config
-SDL_CFLAGS := $(shell $(SDL_CONFIG) --cflags)
-SDL_LIBS   := $(shell $(SDL_CONFIG) --libs)
+SDL_CFLAGS := $(shell pkg-config --cflags sdl2)
+SDL_LIBS   := $(shell pkg-config --libs sdl2)
 
 ifeq ($(HOST_OS),sunos)
 NET_LIBS   :=-lsocket -lnsl -lresolv
@@ -302,7 +294,6 @@ OBJS := strlcat.o \
 
 vkquake:	$(OBJS)
 	$(LINKER) $(OBJS) $(LDFLAGS) $(LIBS) $(SDL_LIBS) -o $@
-	$(call do_strip,$@)
 
 image.o: lodepng.c lodepng.h stb_image_write.h
 
